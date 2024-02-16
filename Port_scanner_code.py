@@ -44,7 +44,7 @@ def getbanner(s):
 def scan(ipinput, port):
     try:
         sock = socket.socket()
-        sock.settimeout(0.5)
+        sock.settimeout(0.1)
         sock.connect((ipinput, port))
         open_ports.append(port)
         try:
