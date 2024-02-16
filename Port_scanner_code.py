@@ -1,4 +1,4 @@
-# Import the libraries needed, sys, pyfiglet for the ASCII banner, and socket to connect to a port, as well as IPy.
+# Import the libraries needed, sys, pyfiglet for the ASCII banner, and socket to connect to a port, as well as IPy for the scan functions.
 import sys
 import pyfiglet
 import socket
@@ -28,36 +28,38 @@ common_Ports_Dict = {
     137: "NetBIOS",
     139: "NetBIOS",
     443: "HTTPS",
-    445: "SMTB"
+    445: "SMB"
 }
 
 # Create an empty list for the open ports from your scans to later compare to the dictionary above.
 open_ports = []
 
+# Get the banner information for the port.
+def getbanner(s):
+    return s.recv(1024)
 
 # Create a scan function to connect to a port, set how long it takes to connect to each port, and add open ports to the
 # open_ports list. Also used to clean up code, so I can just call the function later.
+# I actually had to change how the scan function works, since it couldn't scan ports 80, 443. Now I use IPy instead of the raw socket functions.
 def scan(ipinput, port):
-    global s
     try:
-        s = socket.socket()
-        s.settimeout(0.1)
-        s.connect((ipinput, port))
-        b = s.recv(1024)
-        print(f"[-] Port {port} is open on {ipinput} with banner: {b}")
+        sock = socket.socket()
+        sock.settimeout(0.5)
+        sock.connect((ipinput, port))
         open_ports.append(port)
-    except socket.error as e:
-        # This if statement helps the code if connection is refused, also showing if the port was having an error
-        # instead of refusing a connection.
-        if "refused" in str(e):
-            print(f"[-] Connection to port {port} refused.")
-        else:
-            print(f"Error scanning port {port}")
+        try:
+            banner = getbanner(sock)
+            print('[+] Open Port ' + str(port) + ' : ' + str(banner.decode().strip('\n')))
+            # If port doesn't have a banner, do this instead.
+        except:
+            print('[+] Open Port ' + str(port))
+    except:
+        pass
     finally:
-        s.close()
+        sock.close()
 
 
-# scan an IPv4 address with a custom port range, starting at 1.
+# scan an IPv4 address with a custom port range.
 def scan_By_IP_Custom():
     p1 = int(input('[+] Enter the beginning port: '))
     p2 = int(input('[+] Enter the end port: '))
@@ -78,16 +80,19 @@ def scan_By_IP_Common():
 # Scan a hostname from port 1 to 1024.
 def scan_By_Hostname_Common():
     target = input("[+] Enter a website in format: 'www.website.com': ")
+    # Gets the IP from the hostname and then inputs it into the scan function.
     ipinput = socket.gethostbyname(target)
     for ports in range(1, 1024):
         scan(ipinput, ports)
     print("[-] Scan complete!")
 
 
-# Scan a hostname with a custom port range starting at 1.
+# Scan a hostname with a custom port range.
 def scan_By_Hostname_Custom():
     target = input("[+] Enter a website in format: 'www.website.com': ")
+    # Gets the IP from the hostname and then inputs it into the scan function.
     ipinput = socket.gethostbyname(target)
+    # Requests the user's input for the port range.
     p1 = int(input('[+] Enter the beginning port: '))
     p2 = int(input('[+] Enter the end port: '))
     for port in range(p1, p2 + 1):
@@ -97,13 +102,14 @@ def scan_By_Hostname_Custom():
 
 # Main loop, basic intro and scan type selections. Includes a loop so that when the user enters an invalid input,
 # the program presents the user with the option to try again.
-print('Welcome to port scanner V1!')
+print('Welcome to port scanner V2!')
 while True:
     scan_Choice = input(
         "[+] Please choose scan type: 1:Scan IP w/custom port range, 2:Scan hostname's common ports, 3:Scan hostname "
         "w/custom port range, 4:Scan IP's common ports: ")
     if scan_Choice in {'1', '2', '3', '4'}:
         break
+    # Tells user to try again if they type an invalid option.
     else:
         print("[-] That's not an option! Try again.")
 
@@ -124,10 +130,13 @@ if scan_Choice == '4':
 # extra port information.
 more_info = input("[+] Would you like to know more about the open ports on the hostname/IP? (y/n): ")
 if more_info == "y":
+    # If they wanted more port information, the if statement checks if they wanted it, and then checks the ports, which are in a list, 
+    # to a dictionary with the ports and their functions.
     for port in open_ports:
         if port in common_Ports_Dict:
             print(f"[-] Port {port} is open and commonly used for {common_Ports_Dict[port]}.")
         else:
+            # If the port doesn't match any info on file.
             print(f"[-] Port {port} is open, but there is no information about its common use.")
 else:
     print("Bye!")
