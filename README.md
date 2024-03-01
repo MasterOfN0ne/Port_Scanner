@@ -8,3 +8,4 @@ When picking a common port range, it scans from port 1 to 1024.
 At the end of the scan, the program will ask you if you would like more information on the ports that were open during the scan.
 This extra port information tells you if your port has encryption, by saying SSH, HTTP, HTTPS. It also tells you the uses of the other ports that might be open and vulnerable/useful.
 Make sure to enter everything with no extra spaces/characters or the scanner will not function properly.
+Licensed under the MIT liscense
